@@ -34,4 +34,11 @@ public class TaskModel {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    public void setTittle(String tittle) throws IllegalArgumentException {
+        if (tittle.length() > 50) {
+            throw new IllegalArgumentException("Tittle is too long");
+        }
+        this.tittle = tittle;
+    }
 }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.micrometer.core.ipc.http.HttpSender.Response;
 import jakarta.servlet.http.HttpServletRequest;
 import none.todolist.Utils.Utils;
 
@@ -56,14 +57,26 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public void update(@RequestBody TaskModel taskModel, HttpServletRequest request, @PathVariable UUID id) {
+    public ResponseEntity update(@RequestBody TaskModel taskModel, HttpServletRequest request, @PathVariable UUID id) {
         var idUser = request.getAttribute("idUser");
 
         var task = this.taskRepository.findById(id).orElse(null);
 
+        // checks if the task exists and
+        if (task == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not authorized to update this task");
+        }
+
+        // Check if the user can modify it
+        if (!task.getIdUser().equals(idUser)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are not authorized to update this task");
+        }
+
         Utils.copyNonNullProperties(taskModel, task);
 
-        this.taskRepository.save(task);
+        var taskUpdated = this.taskRepository.save(task);
+
+        return ResponseEntity.ok().body(taskUpdated);
     }
 
 }
